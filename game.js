@@ -12,7 +12,10 @@ $(document).ready(function(){
     var leftRed = {};
     var rightRed = {};
 
-    var carPos = { x: 225, y: 425 };
+	var carWidth = 10;
+	var carHeight = 10;
+    var carPos;// = { x: 225, y: 425 };
+    var gameOver = false;
 
 	var paint_cell = function(x, y, insideColor) {
 		if (!insideColor) {
@@ -36,7 +39,8 @@ $(document).ready(function(){
 				insideColor = "red";
 				leftRed.x = left.x;
 				leftRed.y = left.y;
-				rightRed.x = right.x;
+				leftRed.right = left.x + cw;
+				rightRed.left = rightRed.x = right.x;
 				rightRed.y = right.y;
 			}
 			paint_cell(left.x, left.y, insideColor);
@@ -96,8 +100,6 @@ $(document).ready(function(){
 	}
 
 	var paint_car = function() {
-		var carWidth = 10;
-		var carHeight = 10;
 		var toMoveX = carWidth / 2;
 		var toMoveY = carHeight / 2;
 
@@ -126,11 +128,16 @@ $(document).ready(function(){
 	}
 
 	var paint = function() {
+		if (gameOver) { 
+			return;
+		}
+
 		context.fillStyle = "black";
 		context.fillRect(0, 0, w, h);
 		context.strokeStyle = "black";
 		context.strokeRect(0, 0, w, h);
 
+		
 		update_track();
 
 		paint_track();
@@ -148,35 +155,111 @@ $(document).ready(function(){
 			context.fillStyle = "red";
 			context.fillText("rightRed: " + rightRed.x + ", " + rightRed.y, 5, h - 25);
 		}
-		
+		if (check_collisions()) {
+			context.fillText("BOOM", 5, h - 45);
+			context.font = "bold 20px sans-serif";
+			context.fillStyle = "white";
+			context.fillText("Oh no! You crashed :-(", w * 0.4 - 60, h / 2);
+			context.font = "bold 15px sans-serif";
+			context.fillText("Press enter or click anywhere to start over.", w * 0.4 - 95, h / 2 + 30);
+			gameOver = true;
+		}
+	}
+
+	var check_collisions = function() {
+		if (carPos.left <= leftRed.right || carPos.right >= rightRed.left) {
+			return true;
+		}
+		return false;
 	}
 
 	var keyPressDx = 25;
 	var keyPressDy = 20;
+	var keepCarInBounds = function() {
+		if (carPos.top < 0) {
+			carPos.y = carHeight;
+		} else if (carPos.left < 0) {
+			carPos.x = carWidth;
+		} else if (carPos.right > w) {
+			carPos.x = w - carWidth;
+		} else if (carPos.bottom > h) {
+			carPos.y = h - carHeight;
+		}
+	}
+	
+	var startOver = function() {
+		gameOver = false;
+		init();
+	}
+
 	$(document).keydown(function(e){
 		var key = e.which;
+
+		// reset if game is over but user pressed 'enter'
+		if(gameOver && key == 13) {
+			startOver();
+			return;
+		}
+
 		if(key == "37") {
 			d = "left";
-			carPos.x-=keyPressDx;
+			if ((carPos.x - keyPressDx) > 0) {
+				carPos.x -= keyPressDx;	
+			} else {
+				carPos.x = carPos.x - carPos.left;
+			}
+			
 		} else if(key == "38") {
 			d = "up";
-			carPos.y-=keyPressDy;
+			if ((carPos.y - keyPressDy) > 0) {
+				carPos.y -= keyPressDy;
+			} else {
+				carPos.y = carPos.y - carPos.top;
+			}
 		} else if(key == "39") {
 			d = "right";
-			carPos.x+=keyPressDx;
+			if ((carPos.x + keyPressDx) < w) {
+				carPos.x += keyPressDx;
+			} else {
+				carPos.x = w - (carPos.right - carPos.x);
+			}
 		} else if(key == "40") { 
 			d = "down";
-			carPos.y+=keyPressDy;
+			if ((carPos.y + keyPressDy) < h) {
+				carPos.y += keyPressDy;
+			} else {
+				carPos.y = h - (carPos.bottom - carPos.y);
+			}
 		}
 	});
 
 	$("#canvas").click(function(e) {
-		carPos.x = Math.floor(e.pageX - 15);
-		carPos.y = Math.floor(e.pageY - 5);
+		if (gameOver) {
+			startOver();
+			return;
+		}
+		var clickX = Math.floor(e.pageX - 15);
+		var clickY = Math.floor(e.pageY - 5);
+		if (clickX < carPos.left) {
+			carPos.x -= keyPressDx;
+		} else if (clickX > carPos.right) {
+			carPos.x += keyPressDx;
+		}
+
+		if (clickY < carPos.top) {
+			carPos.y -= keyPressDy;
+		} else if (clickY > carPos.bottom) {
+			carPos.y += keyPressDy;
+		}
+
+		keepCarInBounds();
 	});
 
 	var init = function() {
+		carPos = { x: 225, y: 425 };
 		// setup track
+		left_track = [];
+		right_track = [];
 		for(var i = h; i>=0; i -= cw) {
 			left_track.push({x: 100, y:i});
 			right_track.push({x: w - 100, y: i});
