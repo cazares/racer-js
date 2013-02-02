@@ -12,10 +12,15 @@ $(document).ready(function(){
     var leftRed = {};
     var rightRed = {};
 
-	var carWidth = 10;
-	var carHeight = 10;
+    var powerups = [];
+    var powerupSize = { width: 20, height: 25 };
+
+	var carWidth;// = 10;
+	var carHeight;// = 10;
     var carPos;// = { x: 225, y: 425 };
     var gameOver = false;
+    var score;
+    var powerUpPercentage = 20;
 
 	var paint_cell = function(x, y, insideColor) {
 		if (!insideColor) {
@@ -62,6 +67,88 @@ $(document).ready(function(){
 			ticksSinceLastUpdate++;
 		}
 		return dx;
+	}
+
+	var create_powerups = function() {
+		var roll = Math.round(Math.random() * (100 / powerUpPercentage));
+		if (roll !== 0) {
+			return; // no powerup created this roll
+		}
+		var bounds = { 
+			left: left_track[left_track.length-1].x + cw + powerupSize.width, 
+			right: right_track[right_track.length-1].x - powerupSize.width
+		};
+		var trackWidth = bounds.right - bounds.left;
+		var offset = Math.round(Math.random() * trackWidth);
+		var powerupPosition = { x: bounds.left + offset, y: left_track[left_track.length-1].y };
+		powerups.push(powerupPosition);
+	}
+
+	var update_powerups = function() {
+		for(var i = 0; i < powerups.length; i++) {
+			var powerup = powerups[i];
+			powerup.y += cw;
+		}
+	}
+
+	var pentagonPointsAroundCenter = function(center, size) {
+		var points = [];
+		var halfWidth = size.width / 2;
+		var halfHeight = size.height / 2;
+		var quarterHeight = size.height / 4;
+		points.push({ x: center.x - halfWidth, y: center.y - quarterHeight }); // p1
+		points.push({ x: center.x + halfWidth, y: center.y - quarterHeight }); // p2
+		points.push({ x: center.x - halfWidth, y: center.y + halfHeight }); // p3
+		points.push({ x: center.x, y: center.y - halfHeight }); // p4
+		points.push({ x: center.x + halfWidth, y: center.y + halfHeight }); // p5
+		return points;
+	}
+
+	var drawShapeFromPoints = function(points) {
+		context.beginPath();
+		context.moveTo(points[0].x, points[0].y);
+		for(var i=1; i < points.length; i++) {
+			context.lineTo(points[i].x, points[i].y);
+		}
+		// finish by drawing a line back to the beginning
+		context.lineTo(points[0].x, points[0].y);
+		context.fillStyle = "yellow";
+		context.strokeStyle = "yellow";
+		context.fill();
+		context.stroke();
+		context.closePath();
+	}
+
+	var didGrabPowerUp = function(powerup, size) {
+		if (carPos.y > powerup.top && carPos.y < powerup.bottom) {
+			if (carPos.x > powerup.left && carPos.x < powerup.right) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	var draw_powerups = function() {
+		for(var i=0; i < powerups.length; i++) {
+			var powerup = powerups[i];
+			//context.font = "bold 10px sans-serif";
+			//context.fillText("@", powerup.x, powerup.y);
+			var points = pentagonPointsAroundCenter(powerup, powerupSize);
+			powerup.left = powerup.x - powerupSize.width;
+			powerup.right = powerup.x + powerupSize.width;
+			powerup.top = powerup.y - powerupSize.height;
+			powerup.bottom = powerup.y + powerupSize.height;
+
+			if (didGrabPowerUp(powerup, powerupSize) && !powerup.grabbed) {
+				powerup.grabbed = true;
+				carWidth++;
+				carHeight++;
+				score+=5;
+			}
+			else if (!powerup.grabbed){
+				drawShapeFromPoints(points);
+			}
+		}
 	}
 
 	var ticksSinceLastUpdate = 0;
@@ -144,6 +231,12 @@ $(document).ready(function(){
 
 		paint_car();
 
+		create_powerups();
+		draw_powerups();
+		update_powerups();
+
+		context.fillStyle = "green";
+		context.strokeStyle = "green";
 		context.font = "bold 10px sans-serif";
 		context.fillText("pos.x: " + carPos.x, 5, h - 15);
 		context.fillText("pos.y: " + carPos.y, 5, h - 5);
@@ -164,6 +257,9 @@ $(document).ready(function(){
 			context.fillText("Press enter or click anywhere to start over.", w * 0.4 - 95, h / 2 + 30);
 			gameOver = true;
 		}
+		context.fillStyle = "orange";
+		context.font = "bold 20px sans-serif";
+		context.fillText("Score: " + score, 5, 25);
 	}
 
 	var check_collisions = function() {
@@ -256,6 +352,9 @@ $(document).ready(function(){
 	});
 
 	var init = function() {
+		score = 0;
+		carWidth = 10;
+		carHeight = 10;
 		carPos = { x: 225, y: 425 };
 		// setup track
 		left_track = [];
