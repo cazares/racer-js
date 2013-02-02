@@ -49,6 +49,49 @@ $(document).ready(function(){
 	ctx.fillText("^", carPos.x, carPos.y);
 	//ctx.fillText("y", 58, 165);
 
+	var ticksSinceLastUpdate = 0;
+	var ticksBetweenMoves = 1;
+	var update_track = function() {
+		var oldLeftEnd = left_track[left_track.length-1];
+		var oldRightEnd = right_track[right_track.length-1];
+		var nextDirection = Math.round(Math.random() * 3);
+		var dx = 0;
+		if (nextDirection === 1 && ticksSinceLastUpdate > ticksBetweenMoves) {
+			dx = -1;
+			ticksSinceLastUpdate = 0;
+		} else if (nextDirection === 2 && ticksSinceLastUpdate > ticksBetweenMoves) {
+			dx = 1;
+			ticksSinceLastUpdate = 0;
+		}
+		else {
+			ticksSinceLastUpdate++;
+		}
+		var newLeftEnd = { x: oldLeftEnd.x + (dx * cw / 2), y: oldLeftEnd.y };
+		var newRightEnd = { x: oldRightEnd.x + (dx * cw / 2), y: oldRightEnd.y };
+
+		if (newLeftEnd.x < 0) {
+			newLeftEnd.x = 0;
+		} else if (newLeftEnd.x > 0.4 * w) {
+			newLeftEnd.x = 0.4 * w;
+		}
+
+		if (newRightEnd.x > w) {
+			newRightEnd.x = w;
+		} else if (newRightEnd.x < 0.6 * w) { 
+			newRightEnd.x = 0.6 * w;
+		}
+
+		for(var i=0; i < left_track.length; i++) {
+			left_track[i].y+=cw;
+			right_track[i].y+=cw;
+		}
+
+		left_track.push(newLeftEnd);
+		left_track.shift();
+		right_track.push(newRightEnd);
+		right_track.shift();
+	}
+
 	var paint = function() {
 		//ctx.fillText(" ", carPos.x, carPos.y); // clear old car position
 		ctx.fillStyle = "black";
@@ -56,22 +99,30 @@ $(document).ready(function(){
 		ctx.strokeStyle = "black";
 		ctx.strokeRect(0, 0, w, h);
 
+		update_track();
+
 		paint_track();
 
 		ctx.fillText("^", carPos.x, carPos.y); // draw new car position;
 	}
 
+	var keyPressDx = 25;
+	var keyPressDy = 20;
 	$(document).keydown(function(e){
 		var key = e.which;
-		if(key == "37") d = "left";
-		else if(key == "38") d = "up";
-		else if(key == "39") d = "right";
-		else if(key == "40") d = "down";
-
-		if(d == "right") carPos.x+=10;
-		else if(d == "left") carPos.x-=10;
-		else if(d == "up") carPos.y-=10;
-		else if(d == "down") carPos.y+=10;
+		if(key == "37") {
+			d = "left";
+			carPos.x-=keyPressDx;
+		} else if(key == "38") {
+			d = "up";
+			carPos.y-=keyPressDy;
+		} else if(key == "39") {
+			d = "right";
+			carPos.x+=keyPressDx;
+		} else if(key == "40") { 
+			d = "down";
+			carPos.y+=keyPressDy;
+		}
 	});
 
 	$("#canvas").click(function(e) {
