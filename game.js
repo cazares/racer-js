@@ -14,6 +14,11 @@ $(document).ready(function(){
 
     var powerups = [];
     var powerupSize = { width: 20, height: 25 };
+    var mines = [];
+    var mineSize = { width: 20, height: 25 };
+
+    var mineOffscreenStartIndex;
+    var starOffscreenStartIndex;
 
 	var carWidth;// = 10;
 	var carHeight;// = 10;
@@ -21,6 +26,7 @@ $(document).ready(function(){
     var gameOver = false;
     var score;
     var powerUpPercentage = 20;
+    var minePercentage = 15;
 
 	var paint_cell = function(x, y, insideColor) {
 		if (!insideColor) {
@@ -69,26 +75,71 @@ $(document).ready(function(){
 		return dx;
 	}
 
-	var create_powerups = function() {
-		var roll = Math.round(Math.random() * (100 / powerUpPercentage));
-		if (roll !== 0) {
-			return; // no powerup created this roll
-		}
+	var getRandomPositionInsideTrack = function() {
 		var bounds = { 
 			left: left_track[left_track.length-1].x + cw + powerupSize.width, 
 			right: right_track[right_track.length-1].x - powerupSize.width
 		};
 		var trackWidth = bounds.right - bounds.left;
 		var offset = Math.round(Math.random() * trackWidth);
-		var powerupPosition = { x: bounds.left + offset, y: left_track[left_track.length-1].y };
+		return { x: bounds.left + offset, y: left_track[left_track.length-1].y };
+	}
+
+	var create_mines = function() {
+		var roll = Math.round(Math.random() * (100 / minePercentage));
+		if (roll !== 0) {
+			return;
+		}
+		var minePosition = getRandomPositionInsideTrack();
+		mines.push(minePosition);
+	}
+
+	var create_powerups = function() {
+		var roll = Math.round(Math.random() * (100 / powerUpPercentage));
+		if (roll !== 0) {
+			return; // no powerup created this roll
+		}
+		var powerupPosition = getRandomPositionInsideTrack();
 		powerups.push(powerupPosition);
 	}
 
+	var offScreenCount = 0;
+	var update_mines = function() {
+		var shouldShift = false;
+		for(var i = 0; i < mines.length; i++) {
+			var mine = mines[i];
+			mine.y += cw;
+
+			if (!shouldShift && (mine.y - mineSize.height) > h) {
+				//mines.splice(i,1); // remove if moved off-screen
+				//offScreenCount++;
+				//mines.shift();
+				shouldShift = true;
+			}
+		}
+		if (shouldShift) {
+			mines.shift();
+		}
+	}
+
 	var update_powerups = function() {
+		var shouldShift = false;
 		for(var i = 0; i < powerups.length; i++) {
 			var powerup = powerups[i];
 			powerup.y += cw;
+
+			if (!shouldShift && (powerup.y - powerupSize.height) > h) {
+				//powerups.splice(i,1); // remove if moved off-screen
+				shouldShift = true;
+			}
 		}
+		if (shouldShift) { 
+			powerups.shift();
+		}
+	}
+
+	var clean_mines = function() {
+		//for(var i = 0)
 	}
 
 	var pentagonPointsAroundCenter = function(center, size) {
@@ -149,6 +200,31 @@ $(document).ready(function(){
 				drawShapeFromPoints(points);
 			}
 		}
+	}
+
+	var draw_mines = function() {
+		var reachedOffscreen = false;
+		var offscreenIndex;
+		for(var i=0; i < mines.length && !reachedOffscreen; i++) {
+			var mine = mines[i];
+
+			if ((mine.y - mineSize.height) > h) {
+				reachedOffscreen = true;
+				offscreenIndex = i;
+				continue;
+			}
+
+			context.beginPath();
+			context.arc(mine.x, mine.y, 15, 0, Math.PI * 2, false);
+			context.fillStyle = "purple";
+			context.fill()
+			context.stroke();
+			context.closePath();
+		}
+		if (!reachedOffscreen) {
+			return;
+		}
+		//mines.shift();
 	}
 
 	var ticksSinceLastUpdate = 0;
@@ -235,11 +311,19 @@ $(document).ready(function(){
 		draw_powerups();
 		update_powerups();
 
+		create_mines();
+		draw_mines();
+		update_mines();
+
 		context.fillStyle = "green";
 		context.strokeStyle = "green";
 		context.font = "bold 10px sans-serif";
 		context.fillText("pos.x: " + carPos.x, 5, h - 15);
 		context.fillText("pos.y: " + carPos.y, 5, h - 5);
+		context.fillStyle = "purple";
+		context.fillText("mines: " + mines.length, w - 50, h - 15);
+		context.fillStyle = "yellow";
+		context.fillText("stars: " + powerups.length, w - 45, h - 5);
 		if (leftRed.x && leftRed.y) {
 			context.fillStyle = "red";
 		    context.fillText("leftRed: " + leftRed.x + ", " + leftRed.y, 5, h - 35);
