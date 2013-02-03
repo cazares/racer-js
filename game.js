@@ -27,6 +27,7 @@ $(document).ready(function(){
     var score;
     var powerUpPercentage = 20;
     var minePercentage = 15;
+    var touchedMine = false;
 
 	var paint_cell = function(x, y, insideColor) {
 		if (!insideColor) {
@@ -111,9 +112,6 @@ $(document).ready(function(){
 			mine.y += cw;
 
 			if (!shouldShift && (mine.y - mineSize.radius) > h) {
-				//mines.splice(i,1); // remove if moved off-screen
-				//offScreenCount++;
-				//mines.shift();
 				shouldShift = true;
 			}
 		}
@@ -129,7 +127,6 @@ $(document).ready(function(){
 			powerup.y += cw;
 
 			if (!shouldShift && (powerup.y - powerupSize.height) > h) {
-				//powerups.splice(i,1); // remove if moved off-screen
 				shouldShift = true;
 			}
 		}
@@ -172,42 +169,22 @@ $(document).ready(function(){
 		var fromLeft = item.right > (carPos.left + (overlap / 2));
 		var fromRight = item.left < (carPos.right - (overlap / 2));
 		var fromBottom = item.top < carPos.bottom;
-		// var fromTop = carPos.top <
-		// var fromLeft = item.x > carPos.left;
-		// var fromRight = item.x < carPos.right;
-		// var fromBottom = item.y < carPos.bottom;
-		if ((fromTop && fromBottom) && (fromLeft && fromRight)) {
-			return true;
-		}
-		return false;
-
-		// if (carPos.y > item.top && carPos.y < item.bottom) {
-		// 	if (carPos.x > item.left && carPos.x < item.right) {
-		// 		return true;
-		// 	}
-		// }
-		// return false;
+		return fromTop && fromBottom && fromLeft && fromRight;
 	}
 
 	var draw_powerups = function() {
 		for(var i=0; i < powerups.length; i++) {
 			var powerup = powerups[i];
-			//context.font = "bold 10px sans-serif";
-			//context.fillText("@", powerup.x, powerup.y);
 			var points = pentagonPointsAroundCenter(powerup, powerupSize);
 			powerup.left = powerup.x - powerupSize.width;
 			powerup.right = powerup.x + powerupSize.width;
 			powerup.top = powerup.y - powerupSize.height;
 			powerup.bottom = powerup.y + powerupSize.height;
-			// carPos.top = carPos.y - carHeight;
-			// carPos.bottom = carPos.y + carHeight;
-			// carPos.left = carPos.x - carWidth;
-			// carPos.right = carPos.x + carWidth;
 
 			if (didTouchItem(powerup, powerupSize.width) && !powerup.grabbed) {
 				powerup.grabbed = true;
-				carWidth++;
-				carHeight++;
+				carWidth+=2;
+				carHeight+=2;
 				score+=5;
 			}
 			else if (!powerup.grabbed){
@@ -226,10 +203,11 @@ $(document).ready(function(){
 			if (didTouchItem(mine, mineSize.radius / 2) && !mine.grabbed) {
 				mine.grabbed = true;
 				if (carWidth > 5 && carHeight > 5) {
-					carWidth--;
-					carHeight--;	
+					carWidth-=2;
+					carHeight-=2;	
 				}
 				score-=3;
+				touchedMine = true;
 			}
 			else if (!mine.grabbed) {
 				context.beginPath();
@@ -277,6 +255,7 @@ $(document).ready(function(){
 		right_track.shift();
 	}
 
+	var ticksSinceLastMineTouch = 0; 
 	var paint_car = function() {
 		var toMoveX = carWidth / 2;
 		var toMoveY = carHeight / 2;
@@ -292,14 +271,25 @@ $(document).ready(function(){
 
 		context.beginPath();
 		context.moveTo(lowerLeftPoint);
-		context.lineTo(lowerLeftPoint.x, carPos.y - (toMoveY / 2));
+		var p1 = { x: lowerLeftPoint.x, y: carPos.y - (toMoveY / 2) };
+		context.lineTo(p1.x, p1.y);
 		context.lineTo(carPos.x - (toMoveX / 2), frontOfCar.y);
 
 		context.lineTo(carPos.x + (toMoveX / 2), frontOfCar.y);
 		context.lineTo(lowerRightPoint.x, carPos.y - (toMoveY / 2));
 		context.lineTo(lowerRightPoint.x, lowerRightPoint.y);
 		context.lineTo(lowerLeftPoint.x, lowerLeftPoint.y);
+		context.lineTo(p1.x, p1.y);
 
+		context.strokeStyle = "white";
+		if (touchedMine) {
+			ticksSinceLastMineTouch++;
+			if (ticksSinceLastMineTouch > 10) {
+				touchedMine = false;
+				ticksSinceLastMineTouch = 0;
+			}
+		}
+		context.fillStyle = touchedMine ? "purple" : "green";
 		context.fill();
 		context.stroke();
 		context.closePath();
@@ -353,7 +343,8 @@ $(document).ready(function(){
 			context.fillStyle = "white";
 			context.fillText("Oh no! You crashed :-(", w * 0.4 - 60, h / 2);
 			context.font = "bold 15px sans-serif";
-			context.fillText("Press enter or click anywhere to start over.", w * 0.4 - 95, h / 2 + 30);
+			var gameOverText = "Press enter or click anywhere to start over.";
+			context.fillText(gameOverText, w * 0.4 - 95, h / 2 + 30);
 			gameOver = true;
 		}
 		context.fillStyle = "orange";
@@ -451,6 +442,7 @@ $(document).ready(function(){
 	});
 
 	var init = function() {
+		touchedMine = false;
 		score = 0;
 		carWidth = 10;
 		carHeight = 10;
@@ -458,6 +450,8 @@ $(document).ready(function(){
 		// setup track
 		left_track = [];
 		right_track = [];
+		mines = [];
+		powerups = [];
 		for(var i = h; i>=0; i -= cw) {
 			left_track.push({x: 100, y:i});
 			right_track.push({x: w - 100, y: i});
