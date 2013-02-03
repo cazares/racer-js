@@ -15,7 +15,7 @@ $(document).ready(function(){
     var powerups = [];
     var powerupSize = { width: 20, height: 25 };
     var mines = [];
-    var mineSize = { width: 20, height: 25 };
+    var mineSize = { radius: 20 };
 
     var mineOffscreenStartIndex;
     var starOffscreenStartIndex;
@@ -110,7 +110,7 @@ $(document).ready(function(){
 			var mine = mines[i];
 			mine.y += cw;
 
-			if (!shouldShift && (mine.y - mineSize.height) > h) {
+			if (!shouldShift && (mine.y - mineSize.radius) > h) {
 				//mines.splice(i,1); // remove if moved off-screen
 				//offScreenCount++;
 				//mines.shift();
@@ -136,10 +136,6 @@ $(document).ready(function(){
 		if (shouldShift) { 
 			powerups.shift();
 		}
-	}
-
-	var clean_mines = function() {
-		//for(var i = 0)
 	}
 
 	var pentagonPointsAroundCenter = function(center, size) {
@@ -170,13 +166,27 @@ $(document).ready(function(){
 		context.closePath();
 	}
 
-	var didGrabPowerUp = function(powerup, size) {
-		if (carPos.y > powerup.top && carPos.y < powerup.bottom) {
-			if (carPos.x > powerup.left && carPos.x < powerup.right) {
-				return true;
-			}
+	var didTouchItem = function(item, overlap) {
+		var carTop = carPos.top + overlap;
+		var fromTop = item.bottom > carTop;
+		var fromLeft = item.right > (carPos.left + (overlap / 2));
+		var fromRight = item.left < (carPos.right - (overlap / 2));
+		var fromBottom = item.top < carPos.bottom;
+		// var fromTop = carPos.top <
+		// var fromLeft = item.x > carPos.left;
+		// var fromRight = item.x < carPos.right;
+		// var fromBottom = item.y < carPos.bottom;
+		if ((fromTop && fromBottom) && (fromLeft && fromRight)) {
+			return true;
 		}
 		return false;
+
+		// if (carPos.y > item.top && carPos.y < item.bottom) {
+		// 	if (carPos.x > item.left && carPos.x < item.right) {
+		// 		return true;
+		// 	}
+		// }
+		// return false;
 	}
 
 	var draw_powerups = function() {
@@ -189,8 +199,12 @@ $(document).ready(function(){
 			powerup.right = powerup.x + powerupSize.width;
 			powerup.top = powerup.y - powerupSize.height;
 			powerup.bottom = powerup.y + powerupSize.height;
+			// carPos.top = carPos.y - carHeight;
+			// carPos.bottom = carPos.y + carHeight;
+			// carPos.left = carPos.x - carWidth;
+			// carPos.right = carPos.x + carWidth;
 
-			if (didGrabPowerUp(powerup, powerupSize) && !powerup.grabbed) {
+			if (didTouchItem(powerup, powerupSize.width) && !powerup.grabbed) {
 				powerup.grabbed = true;
 				carWidth++;
 				carHeight++;
@@ -203,28 +217,29 @@ $(document).ready(function(){
 	}
 
 	var draw_mines = function() {
-		var reachedOffscreen = false;
-		var offscreenIndex;
-		for(var i=0; i < mines.length && !reachedOffscreen; i++) {
+		for(var i=0; i < mines.length; i++) {
 			var mine = mines[i];
-
-			if ((mine.y - mineSize.height) > h) {
-				reachedOffscreen = true;
-				offscreenIndex = i;
-				continue;
+			mine.top = mine.y - mineSize.radius;
+			mine.bottom = mine.y + mineSize.radius;
+			mine.left = mine.x - mineSize.radius;
+			mine.right = mine.x + mineSize.radius;
+			if (didTouchItem(mine, mineSize.radius / 2) && !mine.grabbed) {
+				mine.grabbed = true;
+				if (carWidth > 5 && carHeight > 5) {
+					carWidth--;
+					carHeight--;	
+				}
+				score-=3;
 			}
-
-			context.beginPath();
-			context.arc(mine.x, mine.y, 15, 0, Math.PI * 2, false);
-			context.fillStyle = "purple";
-			context.fill()
-			context.stroke();
-			context.closePath();
+			else if (!mine.grabbed) {
+				context.beginPath();
+				context.arc(mine.x, mine.y, mineSize.radius, 0, Math.PI * 2, false);
+				context.fillStyle = "purple";
+				context.fill()
+				context.stroke();
+				context.closePath();
+			}
 		}
-		if (!reachedOffscreen) {
-			return;
-		}
-		//mines.shift();
 	}
 
 	var ticksSinceLastUpdate = 0;
