@@ -170,6 +170,11 @@ $(document).ready(function(){
 		if (android || ios) {
 			document.body.style.height = (window.innerHeight + 50) + 'px';
 		}
+
+		// scroll page after a timeout interval
+		window.setTimeout(function() {
+			window.scrollTo(0,1);
+		}, 1);
 	}
 
 	var init = function() {
@@ -198,4 +203,5 @@ $(document).ready(function(){
 	}
 
 	init();
+	window.addEventListener('resize', resize, false);
 });
