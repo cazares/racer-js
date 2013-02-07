@@ -155,12 +155,7 @@ $(document).ready(function(){
 		keepCarInBounds();
 	});
 
-	var init = function() {
-		touchedMine = false;
-		score = 0;
-		carWidth = 10;
-		carHeight = 10;
-		//carPos = { x: 225, y: 425 };
+	var resizeCanvas = function() {
 		var currentHeight = window.innerHeight;
 		var currentWidth = currentHeight * (w /h);
 		console.log('window.innerHeight: ' + currentHeight + ', window.innerWidth: ' + window.innerWidth);
@@ -168,6 +163,22 @@ $(document).ready(function(){
 		canvas.style.height = currentHeight  + 'px';
 		scale = currentHeight / h;
 		console.log('canvas width: ' + canvas.style.width + ', canvas height: ' + canvas.style.height);
+		var userAgent = navigator.userAgent.toLowerCase();
+		var android = userAgent.indexOf('android') > -1 ? true : false;
+		var ios = (userAgent.indexOf('iphone') > -1 || userAgent.indexOf('ipad') > -1) ? true : false;
+		// get rid of address bar on android, iphone, and ipad
+		if (android || ios) {
+			document.body.style.height = (window.innerHeight + 50) + 'px';
+		}
+	}
+
+	var init = function() {
+		touchedMine = false;
+		score = 0;
+		carWidth = 10;
+		carHeight = 10;
+		//carPos = { x: 225, y: 425 };
+		resizeCanvas();
 		carPos = { x: 160, y: 425 };
 		// setup track
 		left_track = [];
