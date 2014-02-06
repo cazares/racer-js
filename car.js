@@ -18,7 +18,7 @@ var paint_car = function() {
 	carPos.bottom = lowerLeftPoint.y; 
 
 	context.beginPath();
-	context.moveTo(lowerLeftPoint);
+	context.moveTo(lowerLeftPoint.x, lowerLeftPoint.y);
 	var p1 = { x: lowerLeftPoint.x, y: carPos.y - (toMoveY / 2) };
 	context.lineTo(p1.x, p1.y);
 	context.lineTo(carPos.x - (toMoveX / 2), frontOfCar.y);
