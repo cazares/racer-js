@@ -75,7 +75,7 @@ $(document).ready(function(){
 			context.fillStyle = "white";
 			context.fillText("Oh no! You crashed :-(", (w * 0.4) - 80, h / 2);
 			context.font = "bold 15px sans-serif";
-			var gameOverText = "Press enter or click anywhere to start over";
+			var gameOverText = "Tap anywhere to start over";
 			context.fillText(gameOverText, w * 0.4 - 125, h / 2 + 30);
 			gameOver = true;
 		}
