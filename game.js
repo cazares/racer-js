@@ -6,7 +6,8 @@ $(document).ready(function(){
     context = canvas.getContext("2d");
     w = $("#canvas").width();
     h = $("#canvas").height();
-    var scale;
+    var scaleX;
+    var scaleY;
 
     cw = 10;
     var d;
@@ -137,8 +138,8 @@ $(document).ready(function(){
 		}
 		//var clickX = Math.floor(e.pageX - 15);
 		//var clickY = Math.floor(e.pageY - 5);
-		var clickX = Math.floor((e.pageX - canvas.offsetLeft) / scale);
-		var clickY = Math.floor((e.pageY - canvas.offsetTop) /scale);
+		var clickX = Math.floor((e.pageX - canvas.offsetLeft) / scaleX);
+		var clickY = Math.floor((e.pageY - canvas.offsetTop) /scaleY);
 		console.log('clickX: ' + clickX + ', clickY: ' + clickY);
 		if (clickX < carPos.left) {
 			carPos.x -= keyPressDx;
@@ -153,15 +154,31 @@ $(document).ready(function(){
 		}
 
 		keepCarInBounds();
-	});
+  });
+  
+  $(document).bind('touchmove mousemove', function (e) {
+    if (gameOver) {
+			return;
+		}
+    var currentY = e.originalEvent.touches ?  e.originalEvent.touches[0].pageY : e.pageY;
+    var currentX = e.originalEvent.touches ?  e.originalEvent.touches[0].pageX : e.pageX;
+    
+    var xAdjusted = currentX - canvas.offsetLeft;
+    var yAdjusted = currentY - canvas.offsetTop;
+    carPos.x = Math.floor(xAdjusted / scaleX);
+    carPos.y = Math.floor(yAdjusted / scaleY) - 15;
+
+    keepCarInBounds();
+  });
 
 	var resizeCanvas = function() {
 		var currentHeight = window.innerHeight;
-		var currentWidth = currentHeight * (w /h);
+		var currentWidth = currentHeight * (w / h);
 		console.log('window.innerHeight: ' + currentHeight + ', window.innerWidth: ' + window.innerWidth);
 		canvas.style.width = currentWidth + 'px';
 		canvas.style.height = currentHeight  + 'px';
-		scale = currentHeight / h;
+    scaleY = currentHeight / h;
+    scaleX = currentWidth / w;
 		console.log('canvas width: ' + canvas.style.width + ', canvas height: ' + canvas.style.height);
 		var userAgent = navigator.userAgent.toLowerCase();
 		var android = userAgent.indexOf('android') > -1 ? true : false;
@@ -203,5 +220,5 @@ $(document).ready(function(){
 	}
 
 	init();
-	window.addEventListener('resize', resize, false);
+	window.addEventListener('resize', resizeCanvas, false);
 });
