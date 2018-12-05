@@ -74,9 +74,9 @@ $(document).ready(function(){
 			context.font = "bold 20px sans-serif";
 			context.fillStyle = "white";
 			context.fillText("Oh no! You crashed :-(", (w * 0.4) - 80, h / 2);
-			context.font = "bold 15px sans-serif";
+			context.font = "bold 20px sans-serif";
 			var gameOverText = "Tap anywhere to start over";
-			context.fillText(gameOverText, w * 0.4 - 125, h / 2 + 30);
+			context.fillText(gameOverText, (w * 0.4) - 100, h / 2 + 30);
 			gameOver = true;
 		}
 		context.fillStyle = "orange";
