@@ -166,7 +166,7 @@ $(document).ready(function(){
     var xAdjusted = currentX - canvas.offsetLeft;
     var yAdjusted = currentY - canvas.offsetTop;
     carPos.x = Math.floor(xAdjusted / scaleX);
-    carPos.y = Math.floor(yAdjusted / scaleY) - 15;
+    carPos.y = Math.floor(yAdjusted / scaleY) - 40;
 
     keepCarInBounds();
   });
