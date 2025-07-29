@@ -1,12 +1,12 @@
 racer-js
 ========
 
-![Console Racer](http://cazares.github.io/images/racer-js-screenshot.png)
+Browser-based racing game that uses jquery and html5 canvas and draws assets at runtime instead of using static assets:
 
-Text-based html5 racing game that uses jquery. This is to practice html5 canvas.
+![JS Racer Demo](http://cazares.github.io/images/racer-js-quick-demo-gif.gif)
 
-The game is a port of https://github.com/cazares/console-racer
+[Live demo of racer-js](https://cazares.github.io/racer-js/)
 
-This is still a work-in-progress.
+Racer-js is a port of [console racer](https://github.com/cazares/console-racer) which renders ascii characters line by line on the console/terminal:
 
-Live demo can be found here: https://cazares.github.io/racer-js/
+![Console Racer](http://cazares.github.io/images/console-racer-quick-demo-gif.gif)
